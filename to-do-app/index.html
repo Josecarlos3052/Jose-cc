@@ -1,707 +1,461 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Gerencie suas tarefas com elegancia. Login, cadastro e dashboard completo." />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <meta name="description" content="TaskFlow - Gerencie suas tarefas com elegancia."/>
   <title>TaskFlow - Gerenciador de Tarefas</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --bg-base: #0a0f1e;
-      --bg-surface: #0f172a;
-      --bg-card: rgba(15, 23, 42, 0.85);
-      --border-subtle: rgba(255, 255, 255, 0.07);
-      --border-active: rgba(56, 189, 248, 0.4);
-      --accent: #38bdf8;
-      --accent-dim: rgba(56, 189, 248, 0.12);
-      --accent-glow: rgba(56, 189, 248, 0.25);
-      --text-primary: #f0f6ff;
-      --text-secondary: #94a3b8;
-      --text-muted: #475569;
-      --success: #10b981;
-      --error: #f43f5e;
-      --tag-work: #38bdf8;
-      --tag-personal: #f472b6;
-      --tag-study: #34d399;
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#070d1a;
+      --surface:rgba(13,20,38,0.9);
+      --card:rgba(255,255,255,0.04);
+      --border:rgba(255,255,255,0.08);
+      --border-hover:rgba(255,255,255,0.16);
+      --accent:#22d3ee;
+      --accent-glow:rgba(34,211,238,0.2);
+      --accent-dark:rgba(34,211,238,0.1);
+      --green:#10b981;
+      --green-glow:rgba(16,185,129,0.15);
+      --rose:#f43f5e;
+      --rose-glow:rgba(244,63,94,0.12);
+      --amber:#f59e0b;
+      --text1:#eef2ff;
+      --text2:#94a3b8;
+      --text3:#475569;
+      --work-color:#38bdf8;
+      --personal-color:#fb7185;
+      --study-color:#34d399;
     }
-
-    body {
-      font-family: 'Inter', sans-serif;
-      background-color: var(--bg-base);
-      color: var(--text-primary);
-      min-height: 100vh;
+    body{
+      font-family:'Inter',sans-serif;
+      background:var(--bg);
+      color:var(--text1);
+      min-height:100vh;
       background-image:
-        radial-gradient(ellipse 80% 50% at 20% -10%, rgba(56,189,248,0.07) 0%, transparent 60%),
-        radial-gradient(ellipse 60% 40% at 80% 110%, rgba(244,114,182,0.05) 0%, transparent 60%);
+        radial-gradient(ellipse 90% 60% at 10% -5%,rgba(34,211,238,0.06) 0%,transparent 55%),
+        radial-gradient(ellipse 70% 50% at 90% 105%,rgba(251,113,133,0.05) 0%,transparent 55%),
+        radial-gradient(ellipse 50% 40% at 50% 50%,rgba(16,185,129,0.03) 0%,transparent 60%);
+    }
+    .hidden{display:none!important}
+
+    /* ===== NOISE TEXTURE ===== */
+    body::before{
+      content:'';position:fixed;inset:0;
+      background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events:none;z-index:0;opacity:.4;
+    }
+    #auth-container,#app-container{position:relative;z-index:1}
+
+    /* ===== AUTH ===== */
+    #auth-container{
+      display:flex;align-items:center;justify-content:center;
+      min-height:100vh;padding:2rem 1rem;
+    }
+    .auth-card{
+      width:100%;max-width:400px;
+      background:var(--surface);
+      border:1px solid var(--border);
+      border-radius:20px;padding:2.5rem 2rem;
+      backdrop-filter:blur(40px);
+      box-shadow:0 40px 80px rgba(0,0,0,0.6),0 0 0 1px rgba(255,255,255,0.05) inset;
+      animation:fadeUp .45s cubic-bezier(.22,1,.36,1);
+    }
+    @keyframes fadeUp{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    @keyframes slideRight{from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:translateX(0)}}
+
+    .logo{display:flex;align-items:center;gap:.625rem;margin-bottom:2rem}
+    .logo-icon{
+      width:38px;height:38px;border-radius:10px;
+      background:linear-gradient(135deg,var(--accent),#0ea5e9);
+      display:flex;align-items:center;justify-content:center;
+      font-size:18px;color:#04111f;font-weight:800;
+      box-shadow:0 4px 16px var(--accent-glow);
+    }
+    .logo-text{font-size:1.25rem;font-weight:800;letter-spacing:-.03em}
+
+    .auth-heading{font-size:1.625rem;font-weight:700;letter-spacing:-.02em;margin-bottom:.25rem}
+    .auth-sub{font-size:.875rem;color:var(--text2);margin-bottom:1.875rem}
+
+    /* ===== FIELDS ===== */
+    .fgroup{display:flex;flex-direction:column;gap:.3rem;margin-bottom:1rem}
+    .flabel{font-size:.8rem;font-weight:500;color:var(--text2);letter-spacing:.02em;text-transform:uppercase}
+    .finput,.fselect,.ftextarea{
+      width:100%;
+      background:rgba(255,255,255,0.04);
+      border:1px solid var(--border);
+      border-radius:10px;padding:.7rem .9rem;
+      color:var(--text1);font-size:.9375rem;font-family:inherit;
+      outline:none;
+      transition:border-color .2s,box-shadow .2s,background .2s;
+    }
+    .finput:focus,.fselect:focus,.ftextarea:focus{
+      border-color:rgba(34,211,238,.45);
+      background:rgba(34,211,238,.05);
+      box-shadow:0 0 0 3px var(--accent-glow);
+    }
+    .finput::placeholder,.ftextarea::placeholder{color:var(--text3)}
+    .finput.err{border-color:var(--rose);box-shadow:0 0 0 3px var(--rose-glow)}
+    .ferror{font-size:.75rem;color:var(--rose);animation:slideRight .2s ease}
+    .gen-error{
+      background:var(--rose-glow);border:1px solid rgba(244,63,94,.25);
+      border-radius:10px;padding:.6rem .875rem;font-size:.8125rem;
+      color:#fda4af;margin-bottom:1rem;text-align:center;
+      animation:fadeIn .3s ease;
     }
 
-    .hidden { display: none !important; }
+    /* ===== BUTTONS ===== */
+    .btn-primary{
+      width:100%;border:none;border-radius:10px;
+      background:linear-gradient(135deg,var(--accent),#0ea5e9);
+      color:#04111f;font-weight:700;font-size:.9375rem;
+      padding:.8rem 1.25rem;cursor:pointer;font-family:inherit;
+      transition:transform .15s,box-shadow .2s,filter .2s;
+      box-shadow:0 6px 24px var(--accent-glow);margin-top:.5rem;
+    }
+    .btn-primary:hover{transform:translateY(-2px);box-shadow:0 10px 32px rgba(34,211,238,.35);filter:brightness(1.08)}
+    .btn-primary:active{transform:translateY(0)}
+    .auth-link{text-align:center;margin-top:1.5rem;font-size:.875rem;color:var(--text2)}
+    .auth-link a{color:var(--accent);font-weight:600;text-decoration:none;transition:opacity .2s}
+    .auth-link a:hover{opacity:.8}
 
-    /* --- Auth Layout --- */
-    #auth-container {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      padding: 2rem 1rem;
+    /* ===== APP SHELL ===== */
+    #app-container{min-height:100vh;display:flex;flex-direction:column}
+
+    /* ===== HEADER ===== */
+    .app-header{
+      background:rgba(7,13,26,.88);
+      backdrop-filter:blur(24px);
+      border-bottom:1px solid var(--border);
+      position:sticky;top:0;z-index:100;
+      padding:.875rem 1.5rem;
+      display:flex;align-items:center;justify-content:space-between;
+    }
+    .h-brand{display:flex;align-items:center;gap:.625rem}
+    .h-logo{
+      width:32px;height:32px;border-radius:8px;
+      background:linear-gradient(135deg,var(--accent),#0ea5e9);
+      display:flex;align-items:center;justify-content:center;
+      font-weight:800;font-size:14px;color:#04111f;
+    }
+    .h-title{font-size:1.0625rem;font-weight:800;letter-spacing:-.02em}
+    .h-right{display:flex;align-items:center;gap:.875rem}
+    .h-avatar{
+      width:34px;height:34px;border-radius:50%;
+      background:linear-gradient(135deg,#6366f1,var(--accent));
+      display:flex;align-items:center;justify-content:center;
+      font-size:.875rem;font-weight:700;color:#fff;
+      border:2px solid rgba(34,211,238,.3);
+      flex-shrink:0;
+    }
+    .h-greeting{font-size:.875rem;color:var(--text2)}
+    .h-greeting strong{color:var(--text1);font-weight:600}
+    .btn-logout{
+      background:rgba(255,255,255,.05);border:1px solid var(--border);
+      color:var(--text2);font-size:.8rem;font-weight:500;
+      padding:.44rem .875rem;border-radius:8px;cursor:pointer;font-family:inherit;
+      transition:background .2s,color .2s,border-color .2s;
+    }
+    .btn-logout:hover{background:var(--rose-glow);border-color:rgba(244,63,94,.3);color:#fda4af}
+
+    /* ===== MAIN ===== */
+    .app-main{flex:1;max-width:740px;width:100%;margin:0 auto;padding:1.875rem 1.25rem;display:flex;flex-direction:column;gap:1.5rem}
+
+    /* ===== STATS CARDS ===== */
+    .stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.875rem}
+    .stat-card{
+      background:var(--card);border:1px solid var(--border);
+      border-radius:14px;padding:1rem 1.125rem;
+      transition:border-color .2s,transform .2s;
+    }
+    .stat-card:hover{border-color:var(--border-hover);transform:translateY(-2px)}
+    .stat-num{font-size:1.875rem;font-weight:800;letter-spacing:-.03em;line-height:1}
+    .stat-label{font-size:.75rem;color:var(--text2);margin-top:.25rem;font-weight:500;text-transform:uppercase;letter-spacing:.04em}
+    .stat-card.s-total .stat-num{color:var(--accent)}
+    .stat-card.s-pending .stat-num{color:var(--amber)}
+    .stat-card.s-done .stat-num{color:var(--green)}
+
+    /* ===== PROGRESS ===== */
+    .progress-wrap{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1rem 1.25rem}
+    .progress-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.625rem}
+    .progress-label{font-size:.8125rem;font-weight:500;color:var(--text2)}
+    .progress-pct{font-size:.8125rem;font-weight:700;color:var(--green)}
+    .progress-bar-bg{height:6px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden}
+    .progress-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--green),#34d399);transition:width .6s cubic-bezier(.22,1,.36,1)}
+
+    /* ===== PANEL ===== */
+    .panel{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.5rem;backdrop-filter:blur(20px)}
+    .panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem}
+    .panel-title{display:flex;align-items:center;gap:.5rem;font-size:.9375rem;font-weight:600;letter-spacing:-.01em}
+    .ptdot{width:7px;height:7px;border-radius:50%}
+
+    /* ===== FORM ===== */
+    .frow{margin-bottom:.875rem}
+    .fselect{
+      appearance:none;cursor:pointer;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2394a3b8' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+      background-repeat:no-repeat;background-position:right .875rem center;
+    }
+    .fselect option{background:#1e293b;color:var(--text1)}
+    .ftextarea{resize:vertical;min-height:76px}
+    .form-actions{display:flex;align-items:center;gap:.75rem;flex-wrap:wrap}
+    .btn-add{
+      background:linear-gradient(135deg,var(--accent),#0ea5e9);
+      color:#04111f;font-weight:700;font-size:.875rem;
+      padding:.65rem 1.375rem;border-radius:9px;border:none;
+      cursor:pointer;font-family:inherit;
+      transition:transform .15s,box-shadow .2s,filter .2s;
+      box-shadow:0 4px 16px var(--accent-glow);
+      display:flex;align-items:center;gap:.375rem;
+    }
+    .btn-add:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(34,211,238,.3);filter:brightness(1.07)}
+    .btn-add:active{transform:translateY(0)}
+
+    /* ===== FILTERS ===== */
+    .filters{display:flex;gap:.5rem;flex-wrap:wrap}
+    .filter-btn{
+      font-size:.75rem;font-weight:500;padding:.35rem .75rem;
+      border-radius:99px;border:1px solid var(--border);
+      background:transparent;color:var(--text2);cursor:pointer;
+      font-family:inherit;transition:all .2s;
+    }
+    .filter-btn:hover{border-color:var(--border-hover);color:var(--text1)}
+    .filter-btn.active{
+      background:rgba(34,211,238,.12);border-color:rgba(34,211,238,.35);
+      color:var(--accent);font-weight:600;
     }
 
-    .auth-card {
-      width: 100%;
-      max-width: 420px;
-      background: var(--bg-card);
-      border: 1px solid var(--border-subtle);
-      border-radius: 16px;
-      padding: 2.5rem 2rem;
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      box-shadow: 0 32px 64px rgba(0,0,0,0.5), 0 0 0 1px var(--border-subtle) inset;
-      animation: slideUp 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    /* ===== TASK LIST ===== */
+    #task-list{display:flex;flex-direction:column;gap:.625rem}
+    .empty-state{text-align:center;padding:3rem 1rem;color:var(--text3)}
+    .empty-icon{font-size:2.25rem;margin-bottom:.625rem;opacity:.6}
+
+    /* ===== TASK CARD ===== */
+    .task-card{
+      background:var(--card);border:1px solid var(--border);
+      border-radius:12px;padding:.9375rem 1rem;
+      display:flex;align-items:flex-start;gap:.875rem;
+      transition:border-color .2s,background .2s,opacity .35s,transform .2s;
+      animation:fadeUp .3s cubic-bezier(.22,1,.36,1) both;
+      position:relative;overflow:hidden;
     }
-
-    @keyframes slideUp {
-      from { opacity: 0; transform: translateY(24px); }
-      to   { opacity: 1; transform: translateY(0); }
+    .task-card::before{
+      content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
+      border-radius:3px 0 0 3px;
+      transition:opacity .2s;
     }
+    .task-card.type-work::before{background:var(--work-color)}
+    .task-card.type-personal::before{background:var(--personal-color)}
+    .task-card.type-study::before{background:var(--study-color)}
+    .task-card:hover{border-color:var(--border-hover);background:rgba(255,255,255,.06);transform:translateX(2px)}
+    .task-card.done{opacity:.42}
+    .task-card.done:hover{opacity:.55}
 
-    .auth-logo {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      margin-bottom: 2rem;
+    /* checkbox style */
+    .task-check{
+      width:20px;height:20px;border-radius:6px;border:1.5px solid var(--border-hover);
+      background:transparent;cursor:pointer;flex-shrink:0;margin-top:1px;
+      display:flex;align-items:center;justify-content:center;
+      transition:background .2s,border-color .2s;
     }
+    .task-check:hover{border-color:var(--green)}
+    .task-check.checked{background:var(--green);border-color:var(--green)}
+    .task-check.checked::after{content:'✓';font-size:11px;color:#fff;font-weight:700}
 
-    .auth-logo-icon {
-      width: 36px;
-      height: 36px;
-      background: var(--accent);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
+    .task-body{flex:1;min-width:0}
+    .task-top{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:.125rem}
+    .task-title{font-size:.9375rem;font-weight:500;color:var(--text1);line-height:1.4}
+    .done .task-title{text-decoration:line-through;color:var(--text3)}
+    .task-badge{
+      font-size:.65rem;font-weight:700;padding:.175rem .5rem;
+      border-radius:4px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;
     }
+    .bw{background:rgba(56,189,248,.12);color:#7dd3fc;border:1px solid rgba(56,189,248,.2)}
+    .bp{background:rgba(251,113,133,.12);color:#fda4af;border:1px solid rgba(251,113,133,.2)}
+    .bs{background:rgba(52,211,153,.12);color:#6ee7b7;border:1px solid rgba(52,211,153,.2)}
+    .task-desc{font-size:.8125rem;color:var(--text2);margin-top:.3rem;line-height:1.55}
+    .done .task-desc{color:var(--text3)}
 
-    .auth-logo-text {
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: var(--text-primary);
-      letter-spacing: -0.02em;
+    .task-actions{display:flex;align-items:center;gap:.375rem;flex-shrink:0}
+    .btn-delete{
+      background:transparent;border:none;color:var(--text3);
+      font-size:1rem;cursor:pointer;padding:.25rem;
+      border-radius:6px;line-height:1;
+      transition:color .2s,background .2s;
     }
+    .btn-delete:hover{color:#fda4af;background:var(--rose-glow)}
 
-    .auth-title {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: var(--text-primary);
-      margin-bottom: 0.25rem;
-      letter-spacing: -0.02em;
+    @media(max-width:500px){
+      .stats-grid{grid-template-columns:repeat(3,1fr)}
+      .stat-num{font-size:1.375rem}
+      .h-greeting{display:none}
+      .app-main{padding:1.25rem .875rem}
+      .auth-card{padding:2rem 1.25rem}
     }
-
-    .auth-subtitle {
-      font-size: 0.875rem;
-      color: var(--text-secondary);
-      margin-bottom: 2rem;
-    }
-
-    /* --- Form Fields --- */
-    .field-group { display: flex; flex-direction: column; gap: 0.375rem; margin-bottom: 1.125rem; }
-
-    .field-label {
-      font-size: 0.8125rem;
-      font-weight: 500;
-      color: var(--text-secondary);
-      letter-spacing: 0.01em;
-    }
-
-    .field-input {
-      width: 100%;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid var(--border-subtle);
-      border-radius: 8px;
-      padding: 0.6875rem 0.875rem;
-      color: var(--text-primary);
-      font-size: 0.9375rem;
-      font-family: inherit;
-      outline: none;
-      transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
-    }
-
-    .field-input:focus {
-      border-color: var(--border-active);
-      background: rgba(56,189,248,0.05);
-      box-shadow: 0 0 0 3px var(--accent-glow);
-    }
-
-    .field-input::placeholder { color: var(--text-muted); }
-
-    .field-input.error-state { border-color: var(--error); }
-
-    .field-error {
-      font-size: 0.75rem;
-      color: var(--error);
-      display: flex;
-      align-items: center;
-      gap: 0.25rem;
-    }
-
-    /* --- Buttons --- */
-    .btn-primary {
-      width: 100%;
-      background: var(--accent);
-      color: #0a0f1e;
-      font-weight: 600;
-      font-size: 0.9375rem;
-      padding: 0.75rem 1.25rem;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-      font-family: inherit;
-      transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
-      margin-top: 0.5rem;
-      box-shadow: 0 4px 16px rgba(56,189,248,0.2);
-    }
-
-    .btn-primary:hover {
-      background: #7dd3fc;
-      transform: translateY(-1px);
-      box-shadow: 0 6px 20px rgba(56,189,248,0.35);
-    }
-
-    .btn-primary:active { transform: translateY(0); }
-
-    .auth-switch {
-      text-align: center;
-      margin-top: 1.5rem;
-      font-size: 0.875rem;
-      color: var(--text-secondary);
-    }
-
-    .auth-switch a {
-      color: var(--accent);
-      font-weight: 500;
-      text-decoration: none;
-      transition: color 0.2s;
-    }
-
-    .auth-switch a:hover { color: #7dd3fc; }
-
-    .general-error {
-      background: rgba(244,63,94,0.1);
-      border: 1px solid rgba(244,63,94,0.3);
-      border-radius: 8px;
-      padding: 0.625rem 0.875rem;
-      font-size: 0.8125rem;
-      color: #fda4af;
-      margin-bottom: 1rem;
-      text-align: center;
-    }
-
-    /* --- App Layout --- */
-    #app-container {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-
-    /* --- Header --- */
-    .app-header {
-      background: rgba(10,15,30,0.85);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border-bottom: 1px solid var(--border-subtle);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      padding: 1rem 1.5rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .header-brand {
-      display: flex;
-      align-items: center;
-      gap: 0.625rem;
-    }
-
-    .header-logo-icon {
-      width: 30px;
-      height: 30px;
-      background: var(--accent);
-      border-radius: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 15px;
-    }
-
-    .header-logo-text {
-      font-size: 1.125rem;
-      font-weight: 700;
-      color: var(--text-primary);
-      letter-spacing: -0.02em;
-    }
-
-    .header-user {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-
-    .header-greeting {
-      font-size: 0.875rem;
-      color: var(--text-secondary);
-    }
-
-    .header-greeting span {
-      color: var(--text-primary);
-      font-weight: 500;
-    }
-
-    .btn-logout {
-      background: rgba(255,255,255,0.05);
-      border: 1px solid var(--border-subtle);
-      color: var(--text-secondary);
-      font-size: 0.8125rem;
-      font-weight: 500;
-      padding: 0.5rem 1rem;
-      border-radius: 6px;
-      cursor: pointer;
-      font-family: inherit;
-      transition: background 0.2s, color 0.2s, border-color 0.2s;
-    }
-
-    .btn-logout:hover {
-      background: rgba(244,63,94,0.12);
-      border-color: rgba(244,63,94,0.3);
-      color: #fda4af;
-    }
-
-    /* --- Main Content --- */
-    .app-main {
-      flex: 1;
-      max-width: 760px;
-      width: 100%;
-      margin: 0 auto;
-      padding: 2rem 1.25rem;
-      display: flex;
-      flex-direction: column;
-      gap: 1.75rem;
-    }
-
-    /* --- Section Panel --- */
-    .panel {
-      background: var(--bg-card);
-      border: 1px solid var(--border-subtle);
-      border-radius: 14px;
-      padding: 1.5rem;
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-    }
-
-    .panel-title {
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin-bottom: 1.25rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      letter-spacing: -0.01em;
-    }
-
-    .panel-title-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--accent);
-    }
-
-    /* --- Task Form --- */
-    .form-row { margin-bottom: 1rem; }
-
-    .field-select {
-      width: 100%;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid var(--border-subtle);
-      border-radius: 8px;
-      padding: 0.6875rem 0.875rem;
-      color: var(--text-primary);
-      font-size: 0.9375rem;
-      font-family: inherit;
-      outline: none;
-      appearance: none;
-      cursor: pointer;
-      transition: border-color 0.2s, box-shadow 0.2s;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2394a3b8' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 0.875rem center;
-    }
-
-    .field-select:focus {
-      border-color: var(--border-active);
-      box-shadow: 0 0 0 3px var(--accent-glow);
-    }
-
-    .field-select option { background: #1e293b; color: var(--text-primary); }
-
-    .field-textarea {
-      width: 100%;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid var(--border-subtle);
-      border-radius: 8px;
-      padding: 0.6875rem 0.875rem;
-      color: var(--text-primary);
-      font-size: 0.9375rem;
-      font-family: inherit;
-      outline: none;
-      resize: vertical;
-      min-height: 80px;
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-
-    .field-textarea:focus {
-      border-color: var(--border-active);
-      box-shadow: 0 0 0 3px var(--accent-glow);
-    }
-
-    .field-textarea::placeholder { color: var(--text-muted); }
-
-    .btn-add {
-      background: var(--accent);
-      color: #0a0f1e;
-      font-weight: 600;
-      font-size: 0.875rem;
-      padding: 0.625rem 1.375rem;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-      font-family: inherit;
-      transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
-      box-shadow: 0 4px 12px rgba(56,189,248,0.2);
-    }
-
-    .btn-add:hover {
-      background: #7dd3fc;
-      transform: translateY(-1px);
-      box-shadow: 0 6px 16px rgba(56,189,248,0.3);
-    }
-
-    .btn-add:active { transform: translateY(0); }
-
-    /* --- Task List --- */
-    #task-list { display: flex; flex-direction: column; gap: 0.75rem; }
-
-    .empty-state {
-      text-align: center;
-      padding: 3rem 1rem;
-      color: var(--text-muted);
-    }
-
-    .empty-state-icon {
-      font-size: 2.5rem;
-      margin-bottom: 0.75rem;
-      opacity: 0.5;
-    }
-
-    .empty-state p {
-      font-size: 0.9375rem;
-    }
-
-    /* --- Task Card --- */
-    .task-card {
-      background: rgba(255,255,255,0.03);
-      border: 1px solid var(--border-subtle);
-      border-radius: 10px;
-      padding: 1rem 1.125rem;
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 1rem;
-      transition: border-color 0.2s, background 0.2s, opacity 0.3s;
-      animation: cardIn 0.3s cubic-bezier(0.22, 1, 0.36, 1);
-    }
-
-    @keyframes cardIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    .task-card:hover {
-      border-color: rgba(255,255,255,0.12);
-      background: rgba(255,255,255,0.05);
-    }
-
-    .task-card.done {
-      opacity: 0.45;
-      border-color: rgba(255,255,255,0.04);
-    }
-
-    .task-card.done:hover { opacity: 0.55; }
-
-    .task-content { flex: 1; min-width: 0; }
-
-    .task-header {
-      display: flex;
-      align-items: center;
-      gap: 0.625rem;
-      flex-wrap: wrap;
-      margin-bottom: 0.25rem;
-    }
-
-    .task-title {
-      font-size: 0.9375rem;
-      font-weight: 500;
-      color: var(--text-primary);
-      line-height: 1.4;
-    }
-
-    .task-card.done .task-title {
-      text-decoration: line-through;
-      color: var(--text-muted);
-    }
-
-    .task-badge {
-      font-size: 0.6875rem;
-      font-weight: 600;
-      padding: 0.2rem 0.5rem;
-      border-radius: 4px;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      white-space: nowrap;
-    }
-
-    .badge-work {
-      background: rgba(56,189,248,0.15);
-      color: #7dd3fc;
-      border: 1px solid rgba(56,189,248,0.25);
-    }
-
-    .badge-personal {
-      background: rgba(244,114,182,0.15);
-      color: #f9a8d4;
-      border: 1px solid rgba(244,114,182,0.25);
-    }
-
-    .badge-study {
-      background: rgba(52,211,153,0.15);
-      color: #6ee7b7;
-      border: 1px solid rgba(52,211,153,0.25);
-    }
-
-    .task-desc {
-      font-size: 0.8125rem;
-      color: var(--text-secondary);
-      margin-top: 0.375rem;
-      line-height: 1.5;
-    }
-
-    .task-card.done .task-desc { color: var(--text-muted); }
-
-    .btn-complete {
-      background: transparent;
-      border: 1px solid var(--border-subtle);
-      color: var(--text-secondary);
-      font-size: 0.75rem;
-      font-weight: 500;
-      padding: 0.375rem 0.75rem;
-      border-radius: 6px;
-      cursor: pointer;
-      font-family: inherit;
-      white-space: nowrap;
-      transition: background 0.2s, color 0.2s, border-color 0.2s, transform 0.15s;
-      flex-shrink: 0;
-    }
-
-    .btn-complete:hover {
-      background: rgba(16,185,129,0.12);
-      border-color: rgba(16,185,129,0.35);
-      color: #6ee7b7;
-      transform: scale(1.04);
-    }
-
-    .btn-complete.is-done {
-      background: rgba(16,185,129,0.1);
-      border-color: rgba(16,185,129,0.2);
-      color: #6ee7b7;
-      cursor: default;
-    }
-
-    .btn-complete.is-done:hover { transform: none; }
-
-    /* --- Stats bar --- */
-    .stats-bar {
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
-    }
-
-    .stat-chip {
-      font-size: 0.8125rem;
-      color: var(--text-secondary);
-      background: rgba(255,255,255,0.04);
-      border: 1px solid var(--border-subtle);
-      border-radius: 6px;
-      padding: 0.375rem 0.75rem;
-      display: flex;
-      align-items: center;
-      gap: 0.375rem;
-    }
-
-    .stat-chip strong { color: var(--text-primary); }
-
-    @media (max-width: 500px) {
-      .auth-card { padding: 2rem 1.25rem; }
-      .header-greeting { display: none; }
-      .app-main { padding: 1.25rem 0.875rem; }
-      .panel { padding: 1.125rem; }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      *, ::before, ::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+    @media(prefers-reduced-motion:reduce){
+      *,::before,::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
     }
   </style>
 </head>
 <body>
 
-  <!-- ===================== AUTH ===================== -->
-  <div id="auth-container">
-    <div class="auth-card">
+<!-- =========== AUTH =========== -->
+<div id="auth-container">
+  <div class="auth-card">
+    <div class="logo">
+      <div class="logo-icon">T</div>
+      <span class="logo-text">TaskFlow</span>
+    </div>
 
-      <div class="auth-logo">
-        <div class="auth-logo-icon">&#10003;</div>
-        <span class="auth-logo-text">TaskFlow</span>
-      </div>
-
-      <!-- LOGIN VIEW -->
-      <div id="login-view">
-        <h1 class="auth-title">Entrar</h1>
-        <p class="auth-subtitle">Acesse sua conta para gerenciar suas tarefas</p>
-
-        <div id="login-general-error" class="general-error hidden"></div>
-
-        <form id="login-form" novalidate>
-          <div class="field-group">
-            <label class="field-label" for="login-email">E-mail</label>
-            <input class="field-input" type="email" id="login-email" placeholder="seu@email.com" autocomplete="email" />
-            <span id="login-email-error" class="field-error hidden">E-mail obrigatorio</span>
-          </div>
-          <div class="field-group">
-            <label class="field-label" for="login-password">Senha</label>
-            <input class="field-input" type="password" id="login-password" placeholder="Sua senha" autocomplete="current-password" />
-            <span id="login-password-error" class="field-error hidden">Senha obrigatoria</span>
-          </div>
-          <button class="btn-primary" type="submit" id="login-submit">Entrar</button>
-        </form>
-
-        <div class="auth-switch">
-          Nao tem conta? <a href="#" id="go-register">Cadastre-se gratuitamente</a>
+    <!-- LOGIN -->
+    <div id="login-view">
+      <h1 class="auth-heading">Bom te ver</h1>
+      <p class="auth-sub">Entre na sua conta para continuar</p>
+      <div id="login-gen-err" class="gen-error hidden"></div>
+      <form id="login-form" novalidate>
+        <div class="fgroup">
+          <label class="flabel" for="login-email">E-mail</label>
+          <input class="finput" type="email" id="login-email" placeholder="seu@email.com" autocomplete="email"/>
+          <span id="login-email-err" class="ferror hidden">Campo obrigatorio</span>
         </div>
-      </div>
-
-      <!-- REGISTER VIEW -->
-      <div id="register-view" class="hidden">
-        <h1 class="auth-title">Criar conta</h1>
-        <p class="auth-subtitle">Comece a organizar suas tarefas hoje</p>
-
-        <div id="register-general-error" class="general-error hidden"></div>
-
-        <form id="register-form" novalidate>
-          <div class="field-group">
-            <label class="field-label" for="register-name">Nome</label>
-            <input class="field-input" type="text" id="register-name" placeholder="Seu nome" autocomplete="name" />
-            <span id="register-name-error" class="field-error hidden">Nome obrigatorio</span>
-          </div>
-          <div class="field-group">
-            <label class="field-label" for="register-email">E-mail</label>
-            <input class="field-input" type="email" id="register-email" placeholder="seu@email.com" autocomplete="email" />
-            <span id="register-email-error" class="field-error hidden">E-mail obrigatorio</span>
-          </div>
-          <div class="field-group">
-            <label class="field-label" for="register-password">Senha</label>
-            <input class="field-input" type="password" id="register-password" placeholder="Minimo 6 caracteres" autocomplete="new-password" />
-            <span id="register-password-error" class="field-error hidden">Senha obrigatoria (min. 6 caracteres)</span>
-          </div>
-          <button class="btn-primary" type="submit" id="register-submit">Criar conta</button>
-        </form>
-
-        <div class="auth-switch">
-          Ja tem conta? <a href="#" id="go-login">Fazer login</a>
+        <div class="fgroup">
+          <label class="flabel" for="login-pass">Senha</label>
+          <input class="finput" type="password" id="login-pass" placeholder="Sua senha" autocomplete="current-password"/>
+          <span id="login-pass-err" class="ferror hidden">Campo obrigatorio</span>
         </div>
-      </div>
+        <button class="btn-primary" type="submit">Entrar</button>
+      </form>
+      <div class="auth-link">Nao tem conta? <a href="#" id="go-register">Cadastre-se</a></div>
+    </div>
 
+    <!-- REGISTER -->
+    <div id="register-view" class="hidden">
+      <h1 class="auth-heading">Criar conta</h1>
+      <p class="auth-sub">Comece a organizar suas tarefas hoje</p>
+      <div id="reg-gen-err" class="gen-error hidden"></div>
+      <form id="register-form" novalidate>
+        <div class="fgroup">
+          <label class="flabel" for="reg-name">Nome</label>
+          <input class="finput" type="text" id="reg-name" placeholder="Seu nome completo" autocomplete="name"/>
+          <span id="reg-name-err" class="ferror hidden">Nome obrigatorio</span>
+        </div>
+        <div class="fgroup">
+          <label class="flabel" for="reg-email">E-mail</label>
+          <input class="finput" type="email" id="reg-email" placeholder="seu@email.com" autocomplete="email"/>
+          <span id="reg-email-err" class="ferror hidden">E-mail obrigatorio</span>
+        </div>
+        <div class="fgroup">
+          <label class="flabel" for="reg-pass">Senha</label>
+          <input class="finput" type="password" id="reg-pass" placeholder="Minimo 6 caracteres" autocomplete="new-password"/>
+          <span id="reg-pass-err" class="ferror hidden">Minimo 6 caracteres</span>
+        </div>
+        <button class="btn-primary" type="submit">Criar conta gratis</button>
+      </form>
+      <div class="auth-link">Ja tem conta? <a href="#" id="go-login">Entrar</a></div>
     </div>
   </div>
+</div>
 
-  <!-- ===================== APP ===================== -->
-  <div id="app-container" class="hidden">
+<!-- =========== APP =========== -->
+<div id="app-container" class="hidden">
+  <header class="app-header">
+    <div class="h-brand">
+      <div class="h-logo">T</div>
+      <span class="h-title">TaskFlow</span>
+    </div>
+    <div class="h-right">
+      <span class="h-greeting">Ola, <strong id="user-display">--</strong></span>
+      <div class="h-avatar" id="user-avatar">?</div>
+      <button class="btn-logout" id="logout-btn">Sair</button>
+    </div>
+  </header>
 
-    <header class="app-header">
-      <div class="header-brand">
-        <div class="header-logo-icon">&#10003;</div>
-        <span class="header-logo-text">TaskFlow</span>
+  <main class="app-main">
+
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card s-total">
+        <div class="stat-num" id="stat-total">0</div>
+        <div class="stat-label">Total</div>
       </div>
-      <div class="header-user">
-        <span class="header-greeting">Ola, <span id="user-name-display">Usuario</span></span>
-        <button class="btn-logout" id="logout-btn">Sair</button>
+      <div class="stat-card s-pending">
+        <div class="stat-num" id="stat-pending">0</div>
+        <div class="stat-label">Pendentes</div>
       </div>
-    </header>
-
-    <main class="app-main">
-
-      <!-- Stats -->
-      <div class="stats-bar" id="stats-bar">
-        <div class="stat-chip"><strong id="stat-total">0</strong> tarefas</div>
-        <div class="stat-chip"><strong id="stat-pending">0</strong> pendentes</div>
-        <div class="stat-chip"><strong id="stat-done">0</strong> concluidas</div>
+      <div class="stat-card s-done">
+        <div class="stat-num" id="stat-done">0</div>
+        <div class="stat-label">Concluidas</div>
       </div>
+    </div>
 
-      <!-- Add task panel -->
-      <div class="panel">
+    <!-- Progress bar -->
+    <div class="progress-wrap">
+      <div class="progress-header">
+        <span class="progress-label">Progresso geral</span>
+        <span class="progress-pct" id="progress-pct">0%</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="progress-bar" style="width:0%"></div>
+      </div>
+    </div>
+
+    <!-- Add task -->
+    <div class="panel">
+      <div class="panel-header">
         <div class="panel-title">
-          <div class="panel-title-dot"></div>
+          <div class="ptdot" style="background:var(--accent)"></div>
           Nova Tarefa
         </div>
-
-        <form id="task-form" novalidate>
-          <div class="form-row">
-            <label class="field-label" for="task-title" style="display:block;margin-bottom:0.375rem;">Titulo da tarefa <span style="color:var(--error)">*</span></label>
-            <input class="field-input" type="text" id="task-title" placeholder="Ex: Revisar relatorio mensal" />
-            <span id="task-title-error" class="field-error hidden" style="margin-top:0.25rem;">Titulo obrigatorio</span>
-          </div>
-          <div class="form-row">
-            <label class="field-label" for="task-type" style="display:block;margin-bottom:0.375rem;">Tipo</label>
-            <select class="field-select" id="task-type">
-              <option value="work">Trabalho</option>
-              <option value="personal">Pessoal</option>
-              <option value="study">Estudos</option>
-            </select>
-          </div>
-          <div class="form-row">
-            <label class="field-label" for="task-desc" style="display:block;margin-bottom:0.375rem;">Descricao <span style="color:var(--text-muted);font-size:0.75rem;">(opcional)</span></label>
-            <textarea class="field-textarea" id="task-desc" placeholder="Detalhes adicionais da tarefa..."></textarea>
-          </div>
-          <button class="btn-add" type="submit" id="task-submit">+ Adicionar Tarefa</button>
-        </form>
       </div>
+      <form id="task-form" novalidate>
+        <div class="frow">
+          <label class="flabel" for="task-title" style="display:block;margin-bottom:.35rem">Titulo <span style="color:var(--rose)">*</span></label>
+          <input class="finput" type="text" id="task-title" placeholder="Ex: Revisar relatorio mensal"/>
+          <span id="task-title-err" class="ferror hidden" style="margin-top:.25rem">Titulo obrigatorio</span>
+        </div>
+        <div class="frow">
+          <label class="flabel" for="task-type" style="display:block;margin-bottom:.35rem">Tipo</label>
+          <select class="finput fselect" id="task-type">
+            <option value="work">Trabalho</option>
+            <option value="personal">Pessoal</option>
+            <option value="study">Estudos</option>
+          </select>
+        </div>
+        <div class="frow">
+          <label class="flabel" for="task-desc" style="display:block;margin-bottom:.35rem">Descricao <span style="color:var(--text3);font-size:.7rem">(opcional)</span></label>
+          <textarea class="finput ftextarea" id="task-desc" placeholder="Detalhes adicionais..."></textarea>
+        </div>
+        <div class="form-actions">
+          <button class="btn-add" type="submit">
+            <span style="font-size:1.1rem;line-height:1">+</span> Adicionar Tarefa
+          </button>
+        </div>
+      </form>
+    </div>
 
-      <!-- Tasks list panel -->
-      <div class="panel">
+    <!-- Task list -->
+    <div class="panel">
+      <div class="panel-header">
         <div class="panel-title">
-          <div class="panel-title-dot" style="background:var(--success)"></div>
+          <div class="ptdot" style="background:var(--green)"></div>
           Minhas Tarefas
         </div>
-        <div id="task-list"></div>
+        <div class="filters">
+          <button class="filter-btn active" data-filter="all">Todas</button>
+          <button class="filter-btn" data-filter="pending">Pendentes</button>
+          <button class="filter-btn" data-filter="done">Concluidas</button>
+        </div>
       </div>
+      <div id="task-list"></div>
+    </div>
 
-    </main>
-  </div>
+  </main>
+</div>
 
-  <script src="app.js"></script>
+<script src="app.js"></script>
 </body>
 </html>

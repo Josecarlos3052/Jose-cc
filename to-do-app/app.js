@@ -1,205 +1,138 @@
-// ============================================================
 // TaskFlow - app.js
-// Persistence: localStorage simulates db.json with keys:
-//   "users"       => array of user objects
-//   "todos"       => array of todo objects
-//   "currentUser" => object of logged-in user (or null)
-// ============================================================
+// localStorage keys: "users" | "todos" | "currentUser"
 
-// ---------- Storage helpers ----------
+// ---- Storage ----
+const DB = {
+  users:   () => JSON.parse(localStorage.getItem('users')  || '[]'),
+  todos:   () => JSON.parse(localStorage.getItem('todos')  || '[]'),
+  current: () => { const r = localStorage.getItem('currentUser'); return r ? JSON.parse(r) : null; },
+  saveUsers:   (d) => localStorage.setItem('users',  JSON.stringify(d)),
+  saveTodos:   (d) => localStorage.setItem('todos',  JSON.stringify(d)),
+  saveCurrent: (d) => d ? localStorage.setItem('currentUser', JSON.stringify(d)) : localStorage.removeItem('currentUser'),
+};
 
-function getUsers() {
-  return JSON.parse(localStorage.getItem('users') || '[]');
+// ---- State ----
+let activeFilter = 'all';
+
+// ---- Utils ----
+function esc(str) {
+  const d = document.createElement('div');
+  d.appendChild(document.createTextNode(str));
+  return d.innerHTML;
 }
 
-function saveUsers(users) {
-  localStorage.setItem('users', JSON.stringify(users));
+function initials(name) {
+  return name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
 }
 
-function getTodos() {
-  return JSON.parse(localStorage.getItem('todos') || '[]');
+function typeClass(type) {
+  return { work: 'type-work', personal: 'type-personal', study: 'type-study' }[type] || 'type-work';
 }
 
-function saveTodos(todos) {
-  localStorage.setItem('todos', JSON.stringify(todos));
+function badgeClass(type) {
+  return { work: 'bw', personal: 'bp', study: 'bs' }[type] || 'bw';
 }
 
-function getCurrentUser() {
-  const raw = localStorage.getItem('currentUser');
-  return raw ? JSON.parse(raw) : null;
+function typeLabel(type) {
+  return { work: 'Trabalho', personal: 'Pessoal', study: 'Estudos' }[type] || type;
 }
 
-function setCurrentUser(user) {
-  if (user) {
-    localStorage.setItem('currentUser', JSON.stringify(user));
-  } else {
-    localStorage.removeItem('currentUser');
-  }
+// ---- Error helpers ----
+function clearErrors() {
+  document.querySelectorAll('.ferror').forEach(e => e.classList.add('hidden'));
+  document.querySelectorAll('.gen-error').forEach(e => { e.classList.add('hidden'); e.textContent = ''; });
+  document.querySelectorAll('.finput').forEach(e => e.classList.remove('err'));
 }
 
-// ---------- View switching ----------
+function fieldErr(errId, inputId, msg) {
+  const e = document.getElementById(errId);
+  if (e) { e.textContent = msg; e.classList.remove('hidden'); }
+  const i = inputId && document.getElementById(inputId);
+  if (i) i.classList.add('err');
+}
 
-function showAuth(view) {
+function genErr(errId, msg) {
+  const e = document.getElementById(errId);
+  if (e) { e.textContent = msg; e.classList.remove('hidden'); }
+}
+
+// ---- Auth: switch views ----
+function showAuth(view = 'login') {
   document.getElementById('app-container').classList.add('hidden');
   document.getElementById('auth-container').classList.remove('hidden');
-
-  if (view === 'register') {
-    document.getElementById('login-view').classList.add('hidden');
-    document.getElementById('register-view').classList.remove('hidden');
-  } else {
-    document.getElementById('register-view').classList.add('hidden');
-    document.getElementById('login-view').classList.remove('hidden');
-  }
-  clearAuthErrors();
+  document.getElementById('login-view').classList.toggle('hidden', view !== 'login');
+  document.getElementById('register-view').classList.toggle('hidden', view !== 'register');
+  clearErrors();
 }
 
 function showApp(user) {
   document.getElementById('auth-container').classList.add('hidden');
   document.getElementById('app-container').classList.remove('hidden');
-  document.getElementById('user-name-display').textContent = user.name;
+  document.getElementById('user-display').textContent = user.name;
+  document.getElementById('user-avatar').textContent  = initials(user.name);
   renderTasks();
 }
 
-// ---------- Error helpers ----------
-
-function clearAuthErrors() {
-  const ids = [
-    'login-general-error', 'login-email-error', 'login-password-error',
-    'register-general-error', 'register-name-error', 'register-email-error', 'register-password-error'
-  ];
-  ids.forEach(id => {
-    const el = document.getElementById(id);
-    if (el) { el.classList.add('hidden'); el.textContent = ''; }
-  });
-
-  const inputs = document.querySelectorAll('.field-input');
-  inputs.forEach(i => i.classList.remove('error-state'));
-}
-
-function showFieldError(errorId, inputId, msg) {
-  const errEl = document.getElementById(errorId);
-  if (errEl) { errEl.textContent = msg; errEl.classList.remove('hidden'); }
-  if (inputId) {
-    const input = document.getElementById(inputId);
-    if (input) input.classList.add('error-state');
-  }
-}
-
-function showGeneralError(errorId, msg) {
-  const el = document.getElementById(errorId);
-  if (el) { el.textContent = msg; el.classList.remove('hidden'); }
-}
-
-// ---------- Auth: Register ----------
-
+// ---- Register ----
 function handleRegister(e) {
   e.preventDefault();
-  clearAuthErrors();
+  clearErrors();
+  const name  = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim().toLowerCase();
+  const pass  = document.getElementById('reg-pass').value;
+  let ok = true;
 
-  const name     = document.getElementById('register-name').value.trim();
-  const email    = document.getElementById('register-email').value.trim();
-  const password = document.getElementById('register-password').value;
+  if (!name)        { fieldErr('reg-name-err',  'reg-name',  'Nome obrigatorio');              ok = false; }
+  if (!email)       { fieldErr('reg-email-err', 'reg-email', 'E-mail obrigatorio');             ok = false; }
+  if (pass.length < 6) { fieldErr('reg-pass-err', 'reg-pass', 'Minimo 6 caracteres');          ok = false; }
+  if (!ok) return;
 
-  let valid = true;
-
-  if (!name) {
-    showFieldError('register-name-error', 'register-name', 'Nome obrigatorio');
-    valid = false;
-  }
-  if (!email) {
-    showFieldError('register-email-error', 'register-email', 'E-mail obrigatorio');
-    valid = false;
-  }
-  if (!password || password.length < 6) {
-    showFieldError('register-password-error', 'register-password', 'Senha obrigatoria (min. 6 caracteres)');
-    valid = false;
-  }
-
-  if (!valid) return;
-
-  const users = getUsers();
-  const exists = users.some(u => u.email.toLowerCase() === email.toLowerCase());
-
-  if (exists) {
-    showGeneralError('register-general-error', 'Este e-mail ja esta cadastrado.');
-    showFieldError('register-email-error', 'register-email', 'E-mail ja cadastrado');
+  const users = DB.users();
+  if (users.some(u => u.email === email)) {
+    genErr('reg-gen-err', 'Este e-mail ja esta cadastrado.');
+    fieldErr('reg-email-err', 'reg-email', 'E-mail ja cadastrado');
     return;
   }
 
-  const newUser = {
-    id: Date.now().toString(),
-    name,
-    email: email.toLowerCase(),
-    password
-  };
-
-  users.push(newUser);
-  saveUsers(users);
-
+  users.push({ id: Date.now().toString(), name, email, password: pass });
+  DB.saveUsers(users);
   showAuth('login');
 }
 
-// ---------- Auth: Login ----------
-
+// ---- Login ----
 function handleLogin(e) {
   e.preventDefault();
-  clearAuthErrors();
+  clearErrors();
+  const email = document.getElementById('login-email').value.trim().toLowerCase();
+  const pass  = document.getElementById('login-pass').value;
+  let ok = true;
 
-  const email    = document.getElementById('login-email').value.trim();
-  const password = document.getElementById('login-password').value;
+  if (!email) { fieldErr('login-email-err', 'login-email', 'Campo obrigatorio'); ok = false; }
+  if (!pass)  { fieldErr('login-pass-err',  'login-pass',  'Campo obrigatorio'); ok = false; }
+  if (!ok) return;
 
-  let valid = true;
-
-  if (!email) {
-    showFieldError('login-email-error', 'login-email', 'E-mail obrigatorio');
-    valid = false;
-  }
-  if (!password) {
-    showFieldError('login-password-error', 'login-password', 'Senha obrigatoria');
-    valid = false;
-  }
-
-  if (!valid) return;
-
-  const users = getUsers();
-  const user  = users.find(
-    u => u.email.toLowerCase() === email.toLowerCase() && u.password === password
-  );
-
+  const user = DB.users().find(u => u.email === email && u.password === pass);
   if (!user) {
-    showGeneralError('login-general-error', 'E-mail ou senha invalidos. Verifique e tente novamente.');
+    genErr('login-gen-err', 'E-mail ou senha invalidos. Tente novamente.');
     return;
   }
 
-  const sessionUser = { id: user.id, name: user.name, email: user.email };
-  setCurrentUser(sessionUser);
-  showApp(sessionUser);
+  const session = { id: user.id, name: user.name, email: user.email };
+  DB.saveCurrent(session);
+  showApp(session);
 }
 
-// ---------- Auth: Logout ----------
-
+// ---- Logout ----
 function handleLogout() {
-  setCurrentUser(null);
-  showAuth('login');
+  DB.saveCurrent(null);
   document.getElementById('login-form').reset();
+  showAuth('login');
 }
 
-// ---------- Tasks ----------
-
-function getTypeLabel(type) {
-  const labels = { work: 'Trabalho', personal: 'Pessoal', study: 'Estudos' };
-  return labels[type] || type;
-}
-
-function getBadgeClass(type) {
-  const map = { work: 'badge-work', personal: 'badge-personal', study: 'badge-study' };
-  return map[type] || 'badge-work';
-}
-
+// ---- Add task ----
 function handleAddTask(e) {
   e.preventDefault();
-
-  const user  = getCurrentUser();
+  const user = DB.current();
   if (!user) return;
 
   const titleEl = document.getElementById('task-title');
@@ -207,135 +140,135 @@ function handleAddTask(e) {
   const type    = document.getElementById('task-type').value;
   const desc    = document.getElementById('task-desc').value.trim();
 
-  const errEl = document.getElementById('task-title-error');
   if (!title) {
-    errEl.classList.remove('hidden');
-    titleEl.classList.add('error-state');
+    fieldErr('task-title-err', 'task-title', 'Titulo obrigatorio');
+    titleEl.focus();
     return;
   }
-  errEl.classList.add('hidden');
-  titleEl.classList.remove('error-state');
+  document.getElementById('task-title-err').classList.add('hidden');
+  titleEl.classList.remove('err');
 
-  const todos = getTodos();
-  const newTodo = {
-    id:          Date.now().toString(),
-    userId:      user.email,
-    title,
-    type,
-    description: desc,
-    done:        false
-  };
-
-  todos.push(newTodo);
-  saveTodos(todos);
-
+  const todos = DB.todos();
+  todos.push({ id: Date.now().toString(), userId: user.email, title, type, description: desc, done: false });
+  DB.saveTodos(todos);
   document.getElementById('task-form').reset();
   renderTasks();
 }
 
-function toggleDone(todoId) {
-  const todos = getTodos();
-  const idx   = todos.findIndex(t => t.id === todoId);
-  if (idx === -1) return;
-
-  todos[idx].done = true;
-  saveTodos(todos);
+// ---- Toggle done ----
+function toggleDone(id) {
+  const todos = DB.todos();
+  const t = todos.find(x => x.id === id);
+  if (!t || t.done) return;
+  t.done = true;
+  DB.saveTodos(todos);
   renderTasks();
 }
 
+// ---- Delete task ----
+function deleteTask(id) {
+  const card = document.getElementById('card-' + id);
+  if (card) {
+    card.style.transition = 'opacity .25s,transform .25s';
+    card.style.opacity = '0';
+    card.style.transform = 'translateX(16px)';
+    setTimeout(() => {
+      DB.saveTodos(DB.todos().filter(t => t.id !== id));
+      renderTasks();
+    }, 260);
+  }
+}
+
+// ---- Render tasks ----
 function renderTasks() {
-  const user = getCurrentUser();
+  const user = DB.current();
   if (!user) return;
 
-  const todos = getTodos();
-  const mine  = todos.filter(t => t.email === user.email || t.userId === user.email);
+  const all      = DB.todos().filter(t => t.userId === user.email);
+  const pending  = all.filter(t => !t.done);
+  const done     = all.filter(t => t.done);
 
-  const pending   = mine.filter(t => !t.done);
-  const completed = mine.filter(t => t.done);
-  const sorted    = [...pending, ...completed];
-
-  document.getElementById('stat-total').textContent   = mine.length;
+  // stats
+  document.getElementById('stat-total').textContent   = all.length;
   document.getElementById('stat-pending').textContent = pending.length;
-  document.getElementById('stat-done').textContent    = completed.length;
+  document.getElementById('stat-done').textContent    = done.length;
+
+  // progress
+  const pct = all.length ? Math.round((done.length / all.length) * 100) : 0;
+  document.getElementById('progress-pct').textContent = pct + '%';
+  document.getElementById('progress-bar').style.width = pct + '%';
+
+  // filter
+  let list;
+  if (activeFilter === 'pending') list = pending;
+  else if (activeFilter === 'done') list = done;
+  else list = [...pending, ...done];
 
   const listEl = document.getElementById('task-list');
 
-  if (sorted.length === 0) {
-    listEl.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-state-icon">&#128203;</div>
-        <p>Nenhuma tarefa cadastrada ainda.</p>
-      </div>`;
+  if (list.length === 0) {
+    const msgs = {
+      all:     'Nenhuma tarefa cadastrada ainda.',
+      pending: 'Nenhuma tarefa pendente.',
+      done:    'Nenhuma tarefa concluida ainda.',
+    };
+    listEl.innerHTML = `<div class="empty-state"><div class="empty-icon">&#128203;</div><p>${msgs[activeFilter]}</p></div>`;
     return;
   }
 
-  listEl.innerHTML = sorted.map(todo => {
-    const badgeClass = getBadgeClass(todo.type);
-    const label      = getTypeLabel(todo.type);
-    const doneClass  = todo.done ? 'done' : '';
-    const btnClass   = todo.done ? 'is-done' : '';
-    const btnText    = todo.done ? '&#10003; Concluida' : 'Concluir';
-    const btnAttr    = todo.done ? 'disabled' : `onclick="toggleDone('${todo.id}')"`;
-    const descHtml   = todo.description
-      ? `<p class="task-desc">${escapeHtml(todo.description)}</p>`
-      : '';
-
+  listEl.innerHTML = list.map((todo, i) => {
+    const bc  = badgeClass(todo.type);
+    const tc  = typeClass(todo.type);
+    const dn  = todo.done ? 'done' : '';
+    const chk = todo.done ? 'checked' : '';
+    const cl  = todo.done ? '' : `onclick="toggleDone('${todo.id}')"`;
+    const desc = todo.description ? `<p class="task-desc">${esc(todo.description)}</p>` : '';
     return `
-      <div class="task-card ${doneClass}" id="task-${todo.id}">
-        <div class="task-content">
-          <div class="task-header">
-            <span class="task-title">${escapeHtml(todo.title)}</span>
-            <span class="task-badge ${badgeClass}">${label}</span>
+      <div class="task-card ${tc} ${dn}" id="card-${todo.id}" style="animation-delay:${i * 40}ms">
+        <div class="task-check ${chk}" ${cl} title="${todo.done ? 'Concluida' : 'Marcar como concluida'}"></div>
+        <div class="task-body">
+          <div class="task-top">
+            <span class="task-title">${esc(todo.title)}</span>
+            <span class="task-badge ${bc}">${typeLabel(todo.type)}</span>
           </div>
-          ${descHtml}
+          ${desc}
         </div>
-        <button class="btn-complete ${btnClass}" ${btnAttr}>${btnText}</button>
+        <div class="task-actions">
+          <button class="btn-delete" onclick="deleteTask('${todo.id}')" title="Excluir tarefa">&#10005;</button>
+        </div>
       </div>`;
   }).join('');
 }
 
-function escapeHtml(str) {
-  const div = document.createElement('div');
-  div.appendChild(document.createTextNode(str));
-  return div.innerHTML;
+// ---- Filters ----
+function setupFilters() {
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      activeFilter = btn.dataset.filter;
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderTasks();
+    });
+  });
 }
 
-// ---------- Bootstrap ----------
-
+// ---- Boot ----
 function boot() {
-  const user = getCurrentUser();
+  const user = DB.current();
+  if (user) showApp(user);
+  else showAuth('login');
 
-  if (user) {
-    showApp(user);
-  } else {
-    showAuth('login');
-  }
-
-  // Auth form listeners
   document.getElementById('login-form').addEventListener('submit', handleLogin);
   document.getElementById('register-form').addEventListener('submit', handleRegister);
-
-  // View toggle
-  document.getElementById('go-register').addEventListener('click', e => {
-    e.preventDefault();
-    showAuth('register');
-  });
-  document.getElementById('go-login').addEventListener('click', e => {
-    e.preventDefault();
-    showAuth('login');
-  });
-
-  // Logout
+  document.getElementById('go-register').addEventListener('click', e => { e.preventDefault(); showAuth('register'); });
+  document.getElementById('go-login').addEventListener('click', e => { e.preventDefault(); showAuth('login'); });
   document.getElementById('logout-btn').addEventListener('click', handleLogout);
-
-  // Task form
   document.getElementById('task-form').addEventListener('submit', handleAddTask);
-
-  // Clear field error on type
   document.getElementById('task-title').addEventListener('input', () => {
-    document.getElementById('task-title-error').classList.add('hidden');
-    document.getElementById('task-title').classList.remove('error-state');
+    document.getElementById('task-title-err').classList.add('hidden');
+    document.getElementById('task-title').classList.remove('err');
   });
+  setupFilters();
 }
 
 document.addEventListener('DOMContentLoaded', boot);
